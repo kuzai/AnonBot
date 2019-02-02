@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const log = require('simple-node-logger').createSimpleFileLogger('messages.log');
 
 module.exports = {
 	name: 'message',
@@ -17,8 +18,12 @@ module.exports = {
             args.send(mes, {files: attUrls})
                 .then(() => message.react("🔥"))
                 .then(() => {
+                    message.acknowledge()
+                        .catch(console.error);
                     console.log(message.author.username + ": " + message.content);
                     console.log(attUrls);
+                    log.info(message.author.username, ": ", message.content);
+                    log.info(message.author.username, ": ", attUrls);
                 })
                 .catch(console.error);
         }

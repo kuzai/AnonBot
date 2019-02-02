@@ -1,6 +1,7 @@
 const fs = require('fs');
 const config = require('./config.json');
 
+
 const prefix = config.prefix;
 
 console.log("token: " + config.token);
