@@ -1,0 +1,16 @@
+{
+  "name": "anonbot",
+  "version": "1.0.0",
+  "description": "Let's you talk anonymously on discord",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.4.2",
+    "erlpack": "github:hammerandchisel/erlpack",
+    "uws": "^99.0.0"
+  }
+}
