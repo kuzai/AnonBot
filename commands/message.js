@@ -4,9 +4,9 @@ const log = require('simple-node-logger').createSimpleFileLogger('messages.log')
 module.exports = {
 	name: 'message',
 	description: 'Sends a normal anon message. This is the default dm command',
-	execute(message, args) {
+	execute(message, args, user) {
         if(args instanceof Discord.Channel) {
-            var mes = message.content;
+            var mes = user + ": " + message.content;
             
             var atts = message.attachments.array();
             var attUrls = [];

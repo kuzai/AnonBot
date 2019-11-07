@@ -5,9 +5,11 @@ const log = require('simple-node-logger').createSimpleFileLogger('nsfw.log');
 module.exports = {
 	name: 'nsfw',
 	description: 'Send an anon message to nsfw channel',
-	execute(message, args) {
+	execute(message, args, user) {
         if(args instanceof Discord.Channel) {
             var mes = message.content.substring(config.prefix.length + 5); //5 for nsfw + ' '
+            mes = user + ": " + mes + "\n";
+            
             var atts = message.attachments.array();
             var attUrls = [];
             atts.forEach(element => {
