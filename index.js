@@ -98,7 +98,7 @@ client.on("message", message => {
   	    con.query(sql, function (err, result) {
     	    if (err) throw err;
     	    console.log("1 record inserted, ID: " + args[0]);
-	    message.author.send("You were registered with ID: " + anon;
+	    message.author.send("You were registered with ID: " + anon);
   	    });
 	}
 	else if(command == "dm") {
