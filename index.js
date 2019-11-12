@@ -27,7 +27,7 @@ var con = mysql.createConnection({
 con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
-  var sql = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), anon VARCHAR(255))";
+  var sql = "CREATE TABLE IF NOT EXISTS users (name VARCHAR(255) PRIMARY KEY, anon VARCHAR(255))";
   con.query(sql, function (err, result) {
     if (err) throw err;
     console.log("Table created");
@@ -54,21 +54,33 @@ client.once('ready', () => {
 
 
 client.on("message", message => {
-    if (message.author.bot) return;
+    if (message.author.bot || message.author.username == "AnonBot") return;
     const args = message.content.slice(prefix.length).split(/ +/);
     const command = args.shift().toLowerCase();
     console.log("Args: " + args + " Command: " + command);
     if(message.channel instanceof Discord.DMChannel) {
-        if(command == "nsfw") {
+	if(command == "help") {
+	    client.commands.get(command).execute(message, args);
+	}
+        else if(command == "nsfw") {
 	    console.log("User: " + message.author.username);
 	    var sql = "SELECT anon FROM users WHERE name='" + message.author.username + "' LIMIT 1";
 	    var uuid = "";
 	    con.query(sql, function(err, result) {
-		uuid = result[0].anon;
+		var change = true;
 		if(err) {
 		    uuid = "";
 		    console.log("Lookup of user failed " + err);
+		    change = false;
+		    message.author.send("Please make an anonymous id with >?id name!");
+		    return;
 		}
+		if(change && result[0]) uuid = result[0].anon;
+		else{
+		    message.author.send("Please make sure to register an id with >?id name!");
+		    return;
+		}
+
 		//Object.keys(result).forEach(function(key) {
       		//	var row = result[key];
       		//	console.log(row);
@@ -82,10 +94,11 @@ client.on("message", message => {
 	else if(command == "id") {
 	    // insert new id into database so we can get it later
 	    var anon = args[0] + "";
-	    var sql = "INSERT INTO users (name, anon) VALUES ('" + message.author.username + "', '" + anon + "') ON DUPLICATE KEY UPDATE anon='" + anon + "'";
+	    var sql = "INSERT INTO users VALUES ('" + message.author.username + "', '" + anon + "') ON DUPLICATE KEY UPDATE anon='" + anon + "'";
   	    con.query(sql, function (err, result) {
     	    if (err) throw err;
     	    console.log("1 record inserted, ID: " + args[0]);
+	    message.author.send("You were registered with ID: " + anon;
   	    });
 	}
 	else if(command == "dm") {
@@ -93,31 +106,51 @@ client.on("message", message => {
 	    var sql = "SELECT name FROM users WHERE anon='" + args[0] + "' LIMIT 1";
 	    var uuid = "";
 	    con.query(sql, function(err, result) {
-		uuid = result[0].name;
+		var change = true;
 		var chan = "";
 		if(err) {
 		    uuid = "";
 		    console.log("Lookup of user failed " + err);
+		    change = false;
+		    message.author.send("Please make an anonymous id with >?id name! or make sure recipient is valid!");
+		    return;
 		}
+		if(change && result[0]) uuid = result[0].name;
+		else {
+		    message.author.send("Please set an anonymous id with >?id name and verify recipient");
+		    return;
+		}
+
 	    	sql = "SELECT anon FROM users WHERE name='" + message.author.username + "' LIMIT 1";
 	    	con.query(sql, function(err, result2) {
-			var uuid2 = result2[0].anon;
+			
+			var uuid2 = "";
+			change = true;
 			if(err) {
 		    		uuid2 = "";
 		    		console.log("Lookup of user failed " + err);
+				message.author.send("Message failed, set a user id with >?id name");
+				change = false;
+				return;
 			}
-			console.log("REQUEST FROM: " + result[0]);
+			console.log("REQUEST FROM: " + result2[0]);
+			if(change && result2[0]) uuid2 = result2[0].anon;
+			else {
+		    		message.author.send("Please set an anonymous id with >?id name");
+		    		return;
+			}
 			var guilds = client.guilds.array();
 			guilds.forEach(function(guild) {
 				var users = guild.members.array();
 				users.forEach(function(user) {
-					if(user.User.username == uuid) {
-						chan = user.User;
+					if(user.user.username == uuid) {
+						console.log("guild: " + guild.name + " user: " + user.user.username);
+						chan = user;
 					}
 				});
 			});
-			var arg = client.fetchUser(uuid);
-                	client.commands.get("dm").execute(message, chan, uuid2);
+			//var arg = client.fetchUser(uuid);
+                	client.commands.get("dm").execute(message, chan, uuid2, args[0]);
 		});
 		
 		
@@ -129,15 +162,26 @@ client.on("message", message => {
 	    });
  
 	}
-        else {
+	else {
 	    var sql = "SELECT anon FROM users WHERE name='" + message.author.username + "' LIMIT 1";
 	    var uuid = "";
 	    con.query(sql, function(err, result) {
-		uuid = result[0].anon;
+		var change = true;
 		if(err) {
 		    uuid = "";
 		    console.log("Lookup of user failed " + err);
+		    change = false;
+		    message.author.send("Please set an anonymous id with >?id name");
+		    return;
 		}
+		console.log(result);
+
+		if(change && result[0]) uuid = result[0].anon;
+		else {
+		    message.author.send("Please set an anonymous id with >?id name");
+		    return;
+		}
+	
 		//Object.keys(result).forEach(function(key) {
       		//	var row = result[key];
       		//	console.log(row);
@@ -149,18 +193,21 @@ client.on("message", message => {
 	    });
   
         }
+
         return;
     }
-    
     else if(message.content.startsWith(prefix)){
-        try {
-            client.commands.get(command).execute(message, args, client.author.user);
-        } catch (error) {
-            console.error(error);
-            message.reply("That command wasn't found. Try \"" + prefix + "help\"");
-        }
-        return;
-    }
+            try {
+                client.commands.get(command).execute(message, message.author.user);
+            } catch (error) {
+                console.error(error);
+                message.reply("That command wasn't found. Try \"" + prefix + "help\"");
+            }
+            return;
+	}
+ 
+
+
 	
 });
 
